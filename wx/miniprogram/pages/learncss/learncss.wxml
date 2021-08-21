@@ -1,0 +1,2 @@
+<!--{{page}}.wxml-->
+<text wx:if="{{showPath}}">{{page}}.wxml</text>
