@@ -1,3 +1,4 @@
+import { routing } from "../../utils/routing";
 
 Page({
   isPageShowing: false,
@@ -43,7 +44,11 @@ Page({
     ]
 
   },
+  onLoad(opt: Record<'car_id', string>) {
+    const o: routing.LockOpts = opt
+    console.log('unlocking car ', o.car_id);
 
+  },
   onShow() {
     this.isPageShowing = true;
     const userInfo = getApp<IAppOption>().globalData.userInfo
@@ -60,8 +65,12 @@ Page({
         //TODO: get car id from scan result
         const carID = 'car123'
         //作为参数值，需要转义
-        const rediretcURL = `/pages/lock/lock?car_id=${carID}`
-        wx.navigateTo({ url: `/pages/register/register?redirect=${encodeURIComponent(rediretcURL)}` })
+        const rediretcURL = routing.lock({ car_id: carID })
+        wx.navigateTo({
+          url: routing.register({
+            redirectURL: rediretcURL
+          })
+        })
       },
       fail: console.error
     })
@@ -88,7 +97,7 @@ Page({
     )
   },
   onMyTripsTap() {
-    wx.navigateTo({ url: '/pages/mytrips/mytrips' })
+    wx.navigateTo({ url: routing.mytrips() })
   },
   moveCar() {
     const map = wx.createMapContext("map")

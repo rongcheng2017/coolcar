@@ -1,3 +1,5 @@
+import { routing } from "../../utils/routing";
+
 const shareLocationKey = 'share_location'
 
 Page({
@@ -6,8 +8,8 @@ Page({
         shareLocation: true,
     },
     async onLoad(opt) {
-        console.log('unlocking car ',opt.car_id);
-        
+        console.log('unlocking car ', opt.car_id);
+
         const userInfo = getApp<IAppOption>().globalData.userInfo
         this.setData({
             shareLocation: wx.getStorageSync(shareLocationKey) || true,
@@ -48,7 +50,9 @@ Page({
                 wx.showLoading({ title: '开锁中', mask: true })
                 setTimeout(() => {
                     wx.redirectTo({
-                        url: `/pages/driving/driving?trip_id=${tripID}`,
+                        url: routing.driving({
+                            trip_id: tripID
+                        }),
                         complete: () => {
                             wx.hideLoading()
                         }

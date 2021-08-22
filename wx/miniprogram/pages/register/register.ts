@@ -1,3 +1,5 @@
+import { routing } from "../../utils/routing"
+
 // {{page}}.ts
 Page({
   rediretcURL: '',
@@ -11,9 +13,10 @@ Page({
     state: 'UNSUBMITTED' as 'UNSUBMITTED' | 'PENDING' | 'VERIFIED',
   },
 
-  onLoad(opt) {
-    if (opt.redirect) {
-      this.rediretcURL = opt.redirect
+  onLoad(opt:Record<'redirect',string>) {
+    const o:routing.RegisterOpts =opt
+    if (o.redirect) {
+      this.rediretcURL = decodeURIComponent(o.redirect)
     }
   },
   onUploadLic() {
@@ -66,7 +69,7 @@ Page({
       state: 'VERIFIED'
     })
     if (this.rediretcURL) {
-      wx.redirectTo({ url: decodeURIComponent(this.rediretcURL) })
+      wx.redirectTo({ url: this.rediretcURL })
     }
 
   }
