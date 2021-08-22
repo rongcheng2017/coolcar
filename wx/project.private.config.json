@@ -23,6 +23,12 @@
           "pathName": "pages/register/register",
           "query": "",
           "scene": null
+        },
+        {
+          "name": "pages/lock/lock",
+          "pathName": "pages/lock/lock",
+          "query": "",
+          "scene": null
         }
       ]
     }

@@ -1,1 +1,15 @@
 /* {{page}}.wxss */
+
+#text {
+    opacity: .7;
+}
+
+.sedan {
+    width: 600rpx;
+    height: 360rpx;
+}
+
+.cu-btn {
+    position: absolute;
+    bottom: 90rpx;
+}

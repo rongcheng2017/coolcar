@@ -1,2 +1,9 @@
-<!--{{page}}.wxml-->
-<text>{{page}}.wxml</text>
+<view class="container ">
+
+    <image class="sedan"src="/resources/sedan.png" />
+    <view id="text" >驾驶安全是用户的责任</view>
+    <view id="text">请将车辆停放在停车位内</view>
+
+    <button style="width:80%" class="cu-btn bg-grey lg">立即开锁</button>
+    
+</view>
