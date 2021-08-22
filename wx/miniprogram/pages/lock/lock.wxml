@@ -16,5 +16,5 @@
         </view>
         <text class="margin-top">实时展示我的头像</text>
     </view>
-    <button style="width:80%" class="cu-btn bg-grey lg">立即开锁</button>
+    <button style="width:80%" class="cu-btn bg-grey lg" bindtap="onUnlockTap">立即开锁</button>
 </view>

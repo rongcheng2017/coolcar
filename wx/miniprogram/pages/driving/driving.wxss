@@ -1,0 +1,41 @@
+/* {{page}}.wxss */
+
+page {
+    height: 100%;
+    width: 100%;
+}
+
+.container {
+    height: 100%;
+    flex-direction: column-reverse;
+    justify-content: start;
+}
+
+#map {
+    flex-grow: 1;
+    width: 100%;
+}
+
+.pannel {
+    width: 525rpx;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.time text {
+    font-size: 68rpx;
+}
+
+.time .cuIcon-timefill {
+    color: orange;
+}
+
+.time-driven {
+    margin-left: 30rpx;
+    font-weight: bold;
+}
+
+.fee {
+    text-align: center;
+}

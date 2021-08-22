@@ -1,5 +1,6 @@
 // {{page}}.ts
 Page({
+  rediretcURL: '',
   data: {
     licNo: '',
     name: '',
@@ -8,6 +9,12 @@ Page({
     birthDate: '1990-01-01',
     licImgURL: '',
     state: 'UNSUBMITTED' as 'UNSUBMITTED' | 'PENDING' | 'VERIFIED',
+  },
+
+  onLoad(opt) {
+    if (opt.redirect) {
+      this.rediretcURL = opt.redirect
+    }
   },
   onUploadLic() {
     wx.chooseImage({
@@ -58,7 +65,10 @@ Page({
     this.setData({
       state: 'VERIFIED'
     })
-    wx.redirectTo({ url: '/pages/lock/lock' })
+    if (this.rediretcURL) {
+      wx.redirectTo({ url: decodeURIComponent(this.rediretcURL) })
+    }
+
   }
 
 })
