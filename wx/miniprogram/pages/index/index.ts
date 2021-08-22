@@ -2,6 +2,7 @@
 Page({
   isPageShowing: false,
   data: {
+    avatarURL: '',
     setting: {
       skew: 0,
       rotate: 0,
@@ -42,8 +43,13 @@ Page({
     ]
 
   },
+  
   onShow() {
     this.isPageShowing = true;
+    const userInfo = getApp<IAppOption>().globalData.userInfo
+    this.setData({
+      avatarURL: userInfo?.avatarUrl
+    })
   },
   onHide() {
     this.isPageShowing = false;

@@ -4,6 +4,13 @@
     opacity: .7;
 }
 
+.static {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
 .sedan {
     width: 600rpx;
     height: 360rpx;
@@ -12,4 +19,19 @@
 .cu-btn {
     position: absolute;
     bottom: 90rpx;
+}
+
+.avatar-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    top: 100rpx;
+}
+
+.switch-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 8em;
 }
