@@ -37,6 +37,24 @@ Page({
         wx.getLocation({
             type: 'gcj02',
             success: loc => {
+
+                // wx.request({
+                //     url:'https://api.coolcar.cn/trip',
+                //     dataType:'json',
+
+                //     header:{
+                //         authorization:'jf'
+                //     }
+                //     ,
+                //     method:'POST',
+                //     responseType:'text',
+                //     success:(res)=>{
+                //         if(res.statusCode===200){
+                //             const tripID = res.data.tripID
+                //         }
+                //     }
+                // })
+
                 console.log('starting a trip', {
                     location: {
                         latitude: loc.latitude,
