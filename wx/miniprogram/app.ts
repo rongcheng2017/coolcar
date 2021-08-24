@@ -3,6 +3,14 @@
 App<IAppOption>({
   globalData: {},
   onLaunch() {
+    wx.request({
+      url: "http://localhost:8080/trip/trip123",
+      method: 'GET',
+      success: res=>{
+        
+      },
+      fail: console.error,
+    })
     // 展示本地存储能力
     const logs = wx.getStorageSync('logs') || []
     logs.unshift(Date.now())
