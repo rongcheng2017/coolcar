@@ -1,4 +1,6 @@
+import camelcaseKeys = require("camelcase-keys");
 import { IAppOption } from "./appoption"
+import { coolcar } from "./service/proto_gen/trip_pb"
 
 // app.ts
 App<IAppOption>({
@@ -7,7 +9,14 @@ App<IAppOption>({
     wx.request({
       url: "http://localhost:8080/trip/trip123",
       method: 'GET',
-      success: console.log,
+      success: res => {
+        const getTripRes = coolcar.GetTripResponse.fromObject(camelcaseKeys(res.data as object, { deep: true }))
+        console.log(getTripRes);
+
+        //enum -> string
+        console.log(coolcar.TripStatus[getTripRes.trip?.status!])
+
+      },
       fail: console.error,
     })
     // 展示本地存储能力
@@ -25,3 +34,7 @@ App<IAppOption>({
   },
 
 })
+
+function camelcaseKey(): { [k: string]: any; } {
+  throw new Error("Function not implemented.");
+}
