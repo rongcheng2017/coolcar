@@ -1,3 +1,4 @@
+import { IAppOption } from "./appoption"
 
 // app.ts
 App<IAppOption>({
@@ -6,9 +7,7 @@ App<IAppOption>({
     wx.request({
       url: "http://localhost:8080/trip/trip123",
       method: 'GET',
-      success: res=>{
-        
-      },
+      success: console.log,
       fail: console.error,
     })
     // 展示本地存储能力
