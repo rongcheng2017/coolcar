@@ -1,5 +1,6 @@
 import camelcaseKeys = require("camelcase-keys");
 import { IAppOption } from "./appoption"
+import { auth } from "./service/proto_gen/auth/auth_pb";
 import { coolcar } from "./service/proto_gen/trip_pb"
 
 // app.ts
@@ -29,6 +30,17 @@ App<IAppOption>({
       success: res => {
         console.log(res.code)
         // 发送 res.code 到后台换取 openId, sessionKey, unionId
+        wx.request({
+          url: "http://localhost:8080/v1/auth/login",
+          method: 'POST',
+           success: res=>{
+                const response=auth.v1.LoginResponse.fromObject(camelcaseKeys((res.data as object)))
+                console.log(response);
+                
+          },
+
+          fail: console.error,
+        })
       },
     })
   },
