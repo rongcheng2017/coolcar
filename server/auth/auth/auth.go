@@ -4,6 +4,7 @@ import (
 	"context"
 	authpb "coolcar/auth/api/gen/v1"
 	"coolcar/auth/dao"
+	"time"
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -19,6 +20,8 @@ type Service struct {
 	OpenIDResolver OpenIDResolver
 	Mongo          *dao.Mongo
 	Logger         *zap.Logger
+	TokenGenerator TokenGenerator
+	TokenExpire    time.Duration
 	authpb.UnimplementedAuthServiceServer
 }
 
@@ -27,6 +30,12 @@ type OpenIDResolver interface {
 	Resolve(code string) (string, error)
 }
 
+// TokenGenerator generates a token for the specified accountId
+type TokenGenerator interface {
+	GenerateToken(accountID string, expire time.Duration) (string, error)
+}
+
+// Login logs a user in.
 func (s *Service) Login(c context.Context, req *authpb.LoginRequest) (*authpb.LoginResponse, error) {
 	s.Logger.Info("received code", zap.String("code", req.Code))
 
@@ -35,17 +44,20 @@ func (s *Service) Login(c context.Context, req *authpb.LoginRequest) (*authpb.Lo
 		return nil, status.Errorf(codes.Unavailable, "cannot resolve openid: %v", err)
 	}
 
-	accountID,err:= s.Mongo.ResolveAccountID(c,openID)
+	accountID, err := s.Mongo.ResolveAccountID(c, openID)
 	if err != nil {
-		s.Logger.Error("cannot resolve account id ",zap.Error(err))
-		return nil,status.Errorf(codes.Internal,"")
+		s.Logger.Error("cannot resolve account id ", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "")
 	}
 
-
-
+	tkn, err := s.TokenGenerator.GenerateToken(accountID, s.TokenExpire)
+	if err != nil {
+		s.Logger.Error("cannot generate token", zap.Error(err))
+		return nil, status.Error(codes.Internal, "")
+	}
 	return &authpb.LoginResponse{
-		AccessToken: "token for account is :" + accountID,
-		ExpiresIn:   7200,
+		AccessToken: tkn,
+		ExpiresIn:   int32(s.TokenExpire.Seconds()),
 	}, nil
 
 }
