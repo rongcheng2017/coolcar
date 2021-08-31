@@ -33,12 +33,13 @@ App<IAppOption>({
         wx.request({
           url: "http://localhost:8080/v1/auth/login",
           method: 'POST',
-           success: res=>{
-                const response=auth.v1.LoginResponse.fromObject(camelcaseKeys((res.data as object)))
-                console.log(response);
-                
+          success: res => {
+            const response = auth.v1.LoginResponse.fromObject(camelcaseKeys((res.data as object)))
+            console.log(response);
           },
-
+          data: {
+            code: res.code,
+          } as auth.v1.ILoginRequest,
           fail: console.error,
         })
       },
@@ -46,4 +47,3 @@ App<IAppOption>({
   },
 
 })
- 
