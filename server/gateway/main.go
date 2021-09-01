@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	authpb "coolcar/auth/api/gen/v1"
+	rentalpb "coolcar/rental/api/gen/v1"
+	"coolcar/shared/server"
 	"log"
 	"net/http"
 
@@ -12,6 +14,11 @@ import (
 )
 
 func main() {
+	logger, err := server.NewZapLogger()
+	if err != nil {
+		log.Fatalf("cannot create logger :%v", err)
+	}
+
 	//上下文
 	c := context.Background()
 	c, cancel := context.WithCancel(c)
@@ -26,12 +33,33 @@ func main() {
 			},
 		},
 	))
-	//register auth service
-	err := authpb.RegisterAuthServiceHandlerFromEndpoint(c, mux, "localhost:8081", []grpc.DialOption{grpc.WithInsecure()})
-	if err != nil {
-		log.Fatalf("cannot register auth  service %v", err)
+
+	serverConfig := []struct {
+		name         string
+		addr         string
+		registerFunc func(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error)
+	}{
+		{
+			name:         "auth",
+			addr:         "localhost:8081",
+			registerFunc: authpb.RegisterAuthServiceHandlerFromEndpoint,
+		},
+		{
+			name:         "rental",
+			addr:         "localhost:8082",
+			registerFunc: rentalpb.RegisterTripServiceHandlerFromEndpoint,
+		},
 	}
+	// register servers
+	for _, sc := range serverConfig {
+		err := sc.registerFunc(c, mux, sc.addr, []grpc.DialOption{grpc.WithInsecure()})
+		if err != nil {
+			logger.Sugar().Fatalf("cannot register %s  service %v", sc.name, err)
+		}
+	}
+	addr := ":8080"
+	logger.Sugar().Infof("grpc gateway started at %s", addr)
 	//listen and serve
-	log.Fatal(http.ListenAndServe(":8080", mux))
+	logger.Sugar().Fatal(http.ListenAndServe(addr, mux))
 
 }
