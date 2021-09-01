@@ -1,4 +1,5 @@
 import { IAppOption } from "../../appoption";
+import { TripService } from "../../service/trip";
 import { routing } from "../../utils/routing";
 
 const shareLocationKey = 'share_location'
@@ -62,9 +63,11 @@ Page({
                         longitude: loc.longitude,
                     },
                     avatarURL: this.data.shareLocation ? this.data.avatarURL : '',
-                    // carID:'33322'
-
                 })
+                TripService.CreateTrip({
+                    start:'abc'
+                })
+                return
                 const tripID = 'trip456'
                 wx.showLoading({ title: '开锁中', mask: true })
                 setTimeout(() => {
