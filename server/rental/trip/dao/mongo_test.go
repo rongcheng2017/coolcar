@@ -67,9 +67,7 @@ func TestCreateTrip(t *testing.T) {
 	}
 
 	for _, cc := range cases {
-		mgutil.NewObjID = func() primitive.ObjectID {
-			return objid.MustFromID(id.TripID(cc.tripID))
-		}
+		mgutil.NewObjIDWithValue(objid.MustFromID(id.TripID(cc.tripID)))
 		tr, err := m.CreateTrip(c, &rentalpb.Trip{
 			AccountId: cc.accountID,
 			Status:    cc.tripStatus,
@@ -135,6 +133,97 @@ func TestCetTrip(t *testing.T) {
 	}
 	if diff := cmp.Diff(tr, got, protocmp.Transform()); diff != "" {
 		t.Errorf("result differs; -want +got: %s", diff)
+	}
+}
+
+func TestCetTrips(t *testing.T) {
+	rows := []struct {
+		id        string
+		accountID id.AccountID
+		status    rentalpb.TripStatus
+	}{
+		{
+			id:        "61358659c66699ba60b09760",
+			accountID: "account_id_for_get_trips",
+			status:    rentalpb.TripStatus_FINISHED,
+		},
+		{
+			id:        "61358659c66699ba60b09761",
+			accountID: "account_id_for_get_trips",
+			status:    rentalpb.TripStatus_FINISHED,
+		},
+		{
+			id:        "61358659c66699ba60b09762",
+			accountID: "account_id_for_get_trips",
+			status:    rentalpb.TripStatus_FINISHED,
+		},
+		{
+			id:        "61358659c66699ba60b09763",
+			accountID: "account_id_for_get_trips",
+			status:    rentalpb.TripStatus_IN_PROGRESS,
+		},
+		{
+			id:        "61358659c66699ba60b09764",
+			accountID: "account_id_for_get_trips1",
+			status:    rentalpb.TripStatus_IN_PROGRESS,
+		},
+	}
+
+	c := context.Background()
+	mc, err := mongotesting.NewClient(c)
+	if err != nil {
+		t.Fatalf("cannot connect mongdo db:%v", err)
+	}
+
+	m := NewMongo(mc.Database("coolcar"))
+	for _, r := range rows {
+		mgutil.NewObjIDWithValue(id.TripID(r.id))
+		_, err := m.CreateTrip(c, &rentalpb.Trip{
+			AccountId: string(r.accountID),
+			Status:    r.status,
+		})
+		if err != nil {
+			t.Fatalf("cannot create rows: %v", err)
+		}
+
+	}
+	cases := []struct {
+		name      string
+		accountID string
+		status    rentalpb.TripStatus
+		wantCount int
+		wanOnlyID string
+	}{
+		{
+			name:      "get_all",
+			accountID: "account_id_for_get_trips",
+			status:    rentalpb.TripStatus_TS_NOT_SPECIFIED,
+			wantCount: 4,
+		},
+		{
+			name:      "get_in_progress",
+			accountID: "account_id_for_get_trips",
+			status:    rentalpb.TripStatus_IN_PROGRESS,
+			wantCount: 1,
+			wanOnlyID: "61358659c66699ba60b09763",
+		},
+	}
+
+	for _, cc := range cases {
+		t.Run(cc.name, func(t *testing.T) {
+			res, err := m.GetTrips(context.Background(), id.AccountID(cc.accountID), cc.status)
+			if err != nil {
+				t.Errorf("cannot get trips: %v", err)
+			}
+			if cc.wantCount != len(res) {
+				t.Errorf("incorrect result count; want %d, got %d", cc.wantCount, len(res))
+			}
+			if cc.wanOnlyID != "" && len(res) > 0 {
+				if cc.wanOnlyID != res[0].ID.Hex() {
+					t.Errorf("only_id incorrect; want %q got %q", cc.wanOnlyID, res[0].ID.Hex())
+				}
+			}
+		})
 	}
 }
 

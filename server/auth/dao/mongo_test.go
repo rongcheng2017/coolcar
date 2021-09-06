@@ -15,7 +15,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-
 func TestResolveAccountID(t *testing.T) {
 	//start container
 	c := context.Background()
@@ -28,19 +27,17 @@ func TestResolveAccountID(t *testing.T) {
 	_, err = m.col.InsertMany(c, []interface{}{
 		bson.M{
 			mgutil.IDFieldName: objid.MustFromID(id.AccountID("612cb3cedd1930deb67c9a8e")),
-			openIDField:     "openid_1",
+			openIDField:        "openid_1",
 		},
 		bson.M{
 			mgutil.IDFieldName: objid.MustFromID(id.AccountID("612cb3cedd1930deb67c9a70")),
-			openIDField:     "openid_2",
+			openIDField:        "openid_2",
 		},
 	})
 	if err != nil {
 		t.Fatalf("cannot insert initial values: %v", err)
 	}
-	mgutil.NewObjID = func() primitive.ObjectID {
-		return objid.MustFromID(id.AccountID("612cb3cedd1930deb67c9a71"))
-	}
+	mgutil.NewObjIDWithValue(id.AccountID("612cb3cedd1930deb67c9a71"))
 
 	//test case
 	cases := []struct {

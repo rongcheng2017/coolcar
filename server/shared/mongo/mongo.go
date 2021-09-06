@@ -1,6 +1,8 @@
 package mgutil
 
 import (
+	"coolcar/shared/mongo/objid"
+	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -19,6 +21,12 @@ func Set(v interface{}) bson.M {
 }
 
 var NewObjID = primitive.NewObjectID
+
+func NewObjIDWithValue(id fmt.Stringer) {
+	NewObjID = func() primitive.ObjectID {
+		return objid.MustFromID(id)
+	}
+}
 
 var UpdatedAt = func() int64 {
 	return time.Now().UnixNano()
