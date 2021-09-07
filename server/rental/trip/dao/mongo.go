@@ -83,7 +83,7 @@ func (m *Mongo) GetTrips(c context.Context, accountID id.AccountID, status renta
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var trips []*TripRecord
 	for res.Next(c) {
 		var trip TripRecord
@@ -95,4 +95,27 @@ func (m *Mongo) GetTrips(c context.Context, accountID id.AccountID, status renta
 	}
 	return trips, nil
 
+}
+
+func (m *Mongo) UpdateTrip(c context.Context, tid id.TripID, aid id.AccountID, UpdateAt int64, trip *rentalpb.Trip) error {
+	objID, err := objid.FromID(tid)
+	if err != nil {
+		return fmt.Errorf("invalid id: %v", err)
+	}
+	newUpdateAt := mgutil.UpdatedAt()
+	res, err := m.col.UpdateOne(c, bson.M{
+		mgutil.IDFieldName:        objID,
+		accountIDField:            aid.String(),
+		mgutil.UpdatedAtFieldName: UpdateAt,
+	}, mgutil.Set(bson.M{
+		tripField:                 trip,
+		mgutil.UpdatedAtFieldName: newUpdateAt,
+	}))
+	if err != nil {
+		return err
+	}
+	if res.MatchedCount == 0 {
+		return mongo.ErrNilDocument
+	}
+	return nil
 }
