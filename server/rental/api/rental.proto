@@ -29,6 +29,7 @@ message Trip {
     LocationStatus end=4;
     LocationStatus current=5;
     TripStatus status=6;
+    string identity_id =7;
 }
 //entity 不关心值 认id
 message TripEntity{

@@ -1,6 +1,8 @@
 import camelcaseKeys = require("camelcase-keys")
 import { auth } from "./proto_gen/auth/auth_pb"
 
+const bearerPrefix = "Bearer "
+
 export namespace Coolcar {
     const serverAddr = 'http://localhost:8080'
     const AUTH_ERR = 'AUTH_ERR'
@@ -76,7 +78,7 @@ export namespace Coolcar {
             const header: Record<string, any> = {}
             if (authOpt.attachAuthHeader) {
                 if (authData.token && authData.expiryMs >= Date.now()) {
-                    header.authorization = 'Bearer' + authData.token
+                    header.authorization = bearerPrefix + authData.token
                 } else {
                     reject(AUTH_ERR)
                     return

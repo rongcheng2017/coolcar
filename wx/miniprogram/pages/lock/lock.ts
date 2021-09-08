@@ -5,13 +5,14 @@ import { routing } from "../../utils/routing";
 const shareLocationKey = 'share_location'
 
 Page({
+    carID: '',
     data: {
         avatarURL: '',
         shareLocation: true,
     },
-    async onLoad(opt) {
-        console.log('unlocking car ', opt.car_id);
-
+    async onLoad(opt: Record<'car_id', string>) {
+        const o: routing.LockOpts = opt
+        this.carID = o.car_id
         const userInfo = getApp<IAppOption>().globalData.userInfo
         this.setData({
             shareLocation: wx.getStorageSync(shareLocationKey) || true,
@@ -38,42 +39,33 @@ Page({
     onUnlockTap() {
         wx.getLocation({
             type: 'gcj02',
-            success: loc => {
+            success: async loc => {
 
-                // wx.request({
-                //     url:'https://api.coolcar.cn/trip',
-                //     dataType:'json',
-
-                //     header:{
-                //         authorization:'jf'
-                //     }
-                //     ,
-                //     method:'POST',
-                //     responseType:'text',
-                //     success:(res)=>{
-                //         if(res.statusCode===200){
-                //             const tripID = res.data.tripID
-                //         }
-                //     }
-                // })
-
+                const location = {
+                    latitude: loc.latitude,
+                    longitude: loc.longitude,
+                }
                 console.log('starting a trip', {
-                    location: {
-                        latitude: loc.latitude,
-                        longitude: loc.longitude,
-                    },
+                    location: location,
                     avatarURL: this.data.shareLocation ? this.data.avatarURL : '',
                 })
-                TripService.CreateTrip({
-                    start:'abc'
+                if (!this.carID) {
+                    console.error('no carID specified');
+                    return
+                }
+                const trip = await TripService.CreateTrip({
+                    start: location,
+                    carId: this.carID,
                 })
-                return
-                const tripID = 'trip456'
-                wx.showLoading({ title: '开锁中', mask: true })
+                if (!trip.id) {
+                    console.error('no tripID in response', trip);
+                    return
+                }
+                wx.showLoading({ title: '开锁中', mask: true, })
                 setTimeout(() => {
                     wx.redirectTo({
                         url: routing.driving({
-                            trip_id: tripID
+                            trip_id: trip.id
                         }),
                         complete: () => {
                             wx.hideLoading()
