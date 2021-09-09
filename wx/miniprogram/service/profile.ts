@@ -3,7 +3,6 @@ import { Coolcar } from "./request";
 
 export namespace ProfileService {
     export function getProfile(): Promise<rental.v1.IProfile> {
-
         return Coolcar.sendRequesWithAutyRetry(
             {
                 method: 'GET',
@@ -13,8 +12,7 @@ export namespace ProfileService {
         )
     }
 
-    export function submitProfile(req: rental.v1.Identity): Promise<rental.v1.IProfile> {
-
+    export function submitProfile(req: rental.v1.IIdentity): Promise<rental.v1.IProfile> {
         return Coolcar.sendRequesWithAutyRetry({
             method: "POST",
             path: '/v1/profile',
