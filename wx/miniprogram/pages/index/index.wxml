@@ -4,6 +4,6 @@
     <cover-image src="/resources/my_location.png" bindtap="onMyLocationTap"></cover-image>
   </view>
   <view class="btn-container bg-grey round">
-    <cover-view bindtap="onScanClikced">扫码租车</cover-view>
+    <cover-view bindtap="onScanTap">扫码租车</cover-view>
   </view>
 </map>

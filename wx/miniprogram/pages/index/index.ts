@@ -1,4 +1,7 @@
 import { IAppOption } from "../../appoption";
+import { ProfileService } from "../../service/profile";
+import { rental } from "../../service/proto_gen/rental/rental_pb";
+import { TripService } from "../../service/trip";
 import { routing } from "../../utils/routing";
 
 Page({
@@ -60,18 +63,32 @@ Page({
   onHide() {
     this.isPageShowing = false;
   },
-  onScanClikced() {
+  async onScanTap() {
+    //扫描之前先确认有没有正在使用的行程
+    const trips = await TripService.GetTrips(rental.v1.TripStatus.IN_PROGRESS)
+    if ((trips.trips?.length || 0) > 0) {
+      // await this.selectComponent('#tripModal').showModal()
+      wx.navigateTo({ url: routing.driving({ trip_id: trips.trips![0].id! }) })
+      return
+    }
     wx.scanCode({
-      success: () => {
-        //TODO: get car id from scan result
+      success: async() => {
         const carID = 'car123'
         //作为参数值，需要转义
-        const rediretcURL = routing.lock({ car_id: carID })
-        wx.navigateTo({
-          url: routing.register({
-            redirectURL: rediretcURL
-          })
-        })
+        const lockURL = routing.lock({ car_id: carID })
+        const prof = await ProfileService.getProfile()
+          if (prof.identityStatus===rental.v1.IdentityStatus.VERIFIED) {
+            wx.navigateTo({
+              url:lockURL
+            })
+          }else{
+            // await this.selectComponent('#licModal').showModal()
+            wx.navigateTo({
+              url: routing.register({
+                redirectURL: lockURL
+              })
+            })
+          }
       },
       fail: console.error
     })
