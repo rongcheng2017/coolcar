@@ -55,15 +55,15 @@ Page({
         this.setData({
           licImgURL: res.tempFilePaths[0]
         })
-        //TODO: upload image
-        setTimeout(() => {
-          this.setData({
-            licNo: '32423444',
-            name: '张三',
-            genderIndex: 1,
-            birthDate: '1990-10-10'
-          })
-        }, 1000)
+        const data=wx.getFileSystemManager().readFileSync(res.tempFilePaths[0])
+
+        wx.request({
+          method:'PUT',
+          url:'https://coolcar-1307431695.cos.ap-beijing.myqcloud.com/abc.png?q-sign-algorithm=sha1&q-ak=AKIDVpseIflbCYeT2KL8gxxg8KFtHPGq9CyB&q-sign-time=1631518946%3B1631522546&q-key-time=1631518946%3B1631522546&q-header-list=host&q-url-param-list=&q-signature=51cde49abbc86c32ade359868cb301377d5beb3b',
+          data,
+          success:console.log,
+          fail:console.error
+        })
       }
     })
   }
