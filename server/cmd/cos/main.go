@@ -2,34 +2,35 @@ package main
 
 import (
 	"context"
+	blobpb "coolcar/blob/api/gen/v1"
 	"fmt"
-	"net/http"
-	"net/url"
-	"time"
 
-	"github.com/tencentyun/cos-go-sdk-v5"
+	"google.golang.org/grpc"
 )
 
 func main() {
-	u, err := url.Parse("https://coolcar-1307431695.cos.ap-beijing.myqcloud.com")
+	conn, err := grpc.Dial("localhost:8083",grpc.WithInsecure())
 	if err != nil {
 		panic(err)
 	}
-	b := &cos.BaseURL{BucketURL: u}
-	secID := "AKIDVpseIflbCYeT2KL8gxxg8KFtHPGq9CyB"
-	secKey := "0kFSO3SaQ1OUKtBE1bvzmJZaJlxsXv1q"
-	client := cos.NewClient(b, &http.Client{
-		Transport: &cos.AuthorizationTransport{
-			SecretID:  secID,
-			SecretKey: secKey,
-		},
+	c := blobpb.NewBlobServiceClient(conn)
+	ctx := context.Background()
+
+	// res, err := c.CreateBlob(ctx, &blobpb.CreateBlobRequest{
+	// 	AccountId:           "account_1",
+	// 	UploadUrlTimeoutSec: 1000,
+	// })
+	// res,err:= c.GetBlob(ctx,&blobpb.GetBlobRequest{
+	// 	Id: "613f2ed1642df9678f45c188",
+	// })
+
+	res,err:= c.GetBlobURL(ctx,&blobpb.GetBlobURLRequest{
+		Id: "613f2ed1642df9678f45c188",
+		TimeOutSec: 600,
 	})
-	// 获取预签名URL
-	name := "abc.png"
-	presignedURL, err := client.Object.GetPresignedURL(context.Background(),
-		http.MethodPut, name, secID, secKey, 1*time.Hour, nil)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(presignedURL)
+	fmt.Printf("%+v\n",res)
+
 }

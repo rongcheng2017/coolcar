@@ -59,7 +59,7 @@ Page({
 
         wx.request({
           method:'PUT',
-          url:'https://coolcar-1307431695.cos.ap-beijing.myqcloud.com/abc.png?q-sign-algorithm=sha1&q-ak=AKIDVpseIflbCYeT2KL8gxxg8KFtHPGq9CyB&q-sign-time=1631518946%3B1631522546&q-key-time=1631518946%3B1631522546&q-header-list=host&q-url-param-list=&q-signature=51cde49abbc86c32ade359868cb301377d5beb3b',
+          url:'https://coolcar-1307431695.cos.ap-beijing.myqcloud.com/account_1%2F613f2ed1642df9678f45c188?q-sign-algorithm=sha1&q-ak=AKIDVpseIflbCYeT2KL8gxxg8KFtHPGq9CyB&q-sign-time=1631530705%3B1631531705&q-key-time=1631530705%3B1631531705&q-header-list=host&q-url-param-list=&q-signature=dca8075021d818168e7e7ce9494d0839c950645a',
           data,
           success:console.log,
           fail:console.error
