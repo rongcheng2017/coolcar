@@ -32,6 +32,10 @@ func main() {
 		logger.Info("connect mongo db success")
 	}
 	db := mongoClient.Database("coolcar")
+	profService:= &profile.Service{
+		Mongo:  profiledao.NewMongo(db),
+		Logger: logger,
+	}
 	err = server.RunGRPCServer(&server.GRPCConfig{
 		Name:              "rental",
 		Logger:            logger,
@@ -40,15 +44,14 @@ func main() {
 		RegisterFunc: func(s *grpc.Server) {
 			rentalpb.RegisterTripServiceServer(s, &trip.Service{
 				CarManager:     &car.Manager{},
-				ProfileManager: &profileClient.Manager{},
+				ProfileManager: &profileClient.Manager{
+					Fetcher: profService,
+				},
 				POIManager:     &poi.Manager{},
 				Mongo:          tripdao.NewMongo(db),
 				Logger:         logger,
 			})
-			rentalpb.RegisterProfileServiceServer(s, &profile.Service{
-				Mongo:  profiledao.NewMongo(db),
-				Logger: logger,
-			})
+			rentalpb.RegisterProfileServiceServer(s,profService)
 		},
 	})
 	logger.Fatal("cannot start trip server", zap.Error(err))
