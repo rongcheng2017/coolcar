@@ -44,3 +44,16 @@ type IDField struct {
 type UpdatedAtField struct {
 	UpdateAt int64 `bson:"updatedat"`
 }
+
+func ZeroOrDoesNotExist(field string, zero interface{}) bson.M {
+	return bson.M{
+		"$or": []bson.M{
+			{field: zero},
+			{
+				field: bson.M{
+					"$exists": false,
+				},
+			},
+		},
+	}
+}

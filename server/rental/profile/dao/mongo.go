@@ -16,6 +16,7 @@ const (
 	accountIDField      = "accountid"
 	profileField        = "profile"
 	identityStatusField = profileField + ".identitystatus"
+	photoBlobidField    = "photoblobid"
 )
 
 type Mongo struct {
@@ -29,11 +30,12 @@ func NewMongo(db *mongo.Database) *Mongo {
 }
 
 type ProfileRecord struct {
-	AccountID string            `bson:"accountid"`
-	Profile   *rentalpb.Profile `bson:"profile"`
+	AccountID   string            `bson:"accountid"`
+	Profile     *rentalpb.Profile `bson:"profile"`
+	PhotoBlobID string            `bson:"photoblobid"`
 }
 
-func (m *Mongo) GetProfile(c context.Context, aid id.AccountID) (*rentalpb.Profile, error) {
+func (m *Mongo) GetProfile(c context.Context, aid id.AccountID) (*ProfileRecord, error) {
 	res := m.col.FindOne(c, byAccountID(aid))
 	if err := res.Err(); err != nil {
 		return nil, err
@@ -43,21 +45,33 @@ func (m *Mongo) GetProfile(c context.Context, aid id.AccountID) (*rentalpb.Profi
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode profile record:%v", err)
 	}
-	return pr.Profile, nil
+	return &pr, nil
 }
 
 func (m *Mongo) UpdateProfile(c context.Context, aid id.AccountID, preStatus rentalpb.IdentityStatus, profile *rentalpb.Profile) error {
-	_, err := m.col.UpdateOne(c, bson.M{
-		accountIDField:      aid.String(),
+	filter := bson.M{
 		identityStatusField: preStatus,
-	}, mgutil.Set(bson.M{
+	}
+	if preStatus == rentalpb.IdentityStatus_UNSUBMITTED {
+		filter = mgutil.ZeroOrDoesNotExist(identityStatusField, preStatus)
+	}
+	filter[accountIDField] =aid.String()
+	_, err := m.col.UpdateOne(c, filter, mgutil.Set(bson.M{
 		profileField:   profile,
 		accountIDField: aid.String(),
 	}), options.Update().SetUpsert(true))
 	return err
-
 }
 
+func (m *Mongo) UpdateProfilePhoto(c context.Context, aid id.AccountID, bid id.BlobID) error {
+	_, err := m.col.UpdateOne(c, bson.M{
+		accountIDField: aid.String(),
+	}, mgutil.Set(bson.M{
+		photoBlobidField: bid.String(),
+		accountIDField:   aid.String(),
+	}), options.Update().SetUpsert(true))
+	return err
+}
 func byAccountID(aid id.AccountID) bson.M {
 	return bson.M{
 		accountIDField: aid.String()}
