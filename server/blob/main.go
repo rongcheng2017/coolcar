@@ -26,7 +26,7 @@ func main() {
 		logger.Fatal("cannot connect mongodb", zap.Error(err))
 	}
 	db := mongoClient.Database("coolcar")
-	st, err := cos.NewService("https://coolcar-1307431695.cos.ap-beijing.myqcloud.com", "AKIDVpseIflbCYeT2KL8gxxg8KFtHPGq9CyB", "0kFSO3SaQ1OUKtBE1bvzmJZaJlxsXv1q")
+	st, err := cos.NewService("https://coolcar-1307431695.cos.ap-beijing.myqcloud.com", "AKIDvfAQQAeutb5JHyOYS6TbT5RXNwEFzUji", "kDQN4VgbEbiY8SWKr88tNbYFgqoVv4ye")
 	if err != nil {
 		logger.Fatal("cannot create cos service", zap.Error(err))
 	}

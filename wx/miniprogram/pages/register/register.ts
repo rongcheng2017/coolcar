@@ -1,5 +1,6 @@
 import { ProfileService } from "../../service/profile"
 import { rental } from "../../service/proto_gen/rental/rental_pb"
+import { Coolcar } from "../../service/request"
 import { padString } from "../../utils/format"
 import { routing } from "../../utils/routing"
 
@@ -25,15 +26,17 @@ Page({
     state: rental.v1.IdentityStatus[rental.v1.IdentityStatus.UNSUBMITTED],
   },
   renderProfile(p: rental.v1.IProfile) {
-    this.setData(
-      {
-        licNo: p.identity?.licNumber || '',
-        name: p.identity?.name || '',
-        genderIndex: p.identity?.gender || 0,
-        birthDate: formatDate(p.identity?.birthDateMillis || 0),
-        state: rental.v1.IdentityStatus[p.identityStatus || 0],
-      }
+    this.renderIdentity(p.identity!)
+    this.setData({ state: rental.v1.IdentityStatus[p.identityStatus || 0], }
     )
+  },
+  renderIdentity(identity?: rental.v1.IIdentity) {
+    this.setData({
+      licNo: identity?.licNumber || '',
+      name: identity?.name || '',
+      genderIndex: identity?.gender || 0,
+      birthDate: formatDate(identity?.birthDateMillis || 0),
+    })
   },
   onLoad(opt: Record<'redirect', string>) {
     const o: routing.RegisterOpts = opt
@@ -43,6 +46,11 @@ Page({
     ProfileService.getProfile().then(p => {
       this.renderProfile(p)
     })
+    ProfileService.getProfilePhoto().then(p => {
+      this.setData({
+        licImgURL: p.url || '',
+      })
+    })
   },
 
   onUnload() {
@@ -51,19 +59,23 @@ Page({
   onUploadLic() {
     wx.chooseImage({
       count: 1,
-      success: res => {
+      success: async res => {
+        if (res.tempFilePaths.length === 0) {
+          return
+        }
         this.setData({
           licImgURL: res.tempFilePaths[0]
         })
-        const data=wx.getFileSystemManager().readFileSync(res.tempFilePaths[0])
-
-        wx.request({
-          method:'PUT',
-          url:'https://coolcar-1307431695.cos.ap-beijing.myqcloud.com/account_1%2F613f2ed1642df9678f45c188?q-sign-algorithm=sha1&q-ak=AKIDVpseIflbCYeT2KL8gxxg8KFtHPGq9CyB&q-sign-time=1631530705%3B1631531705&q-key-time=1631530705%3B1631531705&q-header-list=host&q-url-param-list=&q-signature=dca8075021d818168e7e7ce9494d0839c950645a',
-          data,
-          success:console.log,
-          fail:console.error
+        const photoRes = await ProfileService.createProfilePhoto()
+        if (!photoRes.uploadUrl) {
+          return
+        }
+        await Coolcar.uploadFile({
+          localPath: res.tempFilePaths[0],
+          url: photoRes.uploadUrl,
         })
+        const identity = await ProfileService.completeProfilePhoto()
+        this.renderIdentity(identity)
       }
     })
   }
@@ -110,6 +122,11 @@ Page({
   },
   onReSubmit() {
     ProfileService.clearProflie().then(p => this.renderProfile(p))
+    ProfileService.completeProfilePhoto().then(() => {
+      this.setData({
+        licImgURL: '',
+      })
+    })
   },
   onLicVerified() {
     if (this.rediretcURL) {

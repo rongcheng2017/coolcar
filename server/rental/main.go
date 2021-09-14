@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	blobpb "coolcar/blob/api/gen/v1"
 	rentalpb "coolcar/rental/api/gen/v1"
 	"coolcar/rental/profile"
 	profiledao "coolcar/rental/profile/dao"
@@ -12,6 +13,7 @@ import (
 	tripdao "coolcar/rental/trip/dao"
 	"coolcar/shared/server"
 	"log"
+	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -32,9 +34,17 @@ func main() {
 		logger.Info("connect mongo db success")
 	}
 	db := mongoClient.Database("coolcar")
-	profService:= &profile.Service{
-		Mongo:  profiledao.NewMongo(db),
-		Logger: logger,
+	blobConn, err := grpc.Dial("localhost:8083", grpc.WithInsecure())
+	if err != nil {
+		logger.Fatal("cannot connect blob service", zap.Error(err))
+	}
+
+	profService := &profile.Service{
+		Mongo:             profiledao.NewMongo(db),
+		Logger:            logger,
+		BlobClient:        blobpb.NewBlobServiceClient(blobConn),
+		PhotoGetExpire:    5 * time.Second,
+		PhotoUploadExpire: 10 * time.Second,
 	}
 	err = server.RunGRPCServer(&server.GRPCConfig{
 		Name:              "rental",
@@ -43,15 +53,15 @@ func main() {
 		AuthPublicKeyFile: "/Users/fengrongcheng/360/golang/coolcar/server/shared/auth/public.key",
 		RegisterFunc: func(s *grpc.Server) {
 			rentalpb.RegisterTripServiceServer(s, &trip.Service{
-				CarManager:     &car.Manager{},
+				CarManager: &car.Manager{},
 				ProfileManager: &profileClient.Manager{
 					Fetcher: profService,
 				},
-				POIManager:     &poi.Manager{},
-				Mongo:          tripdao.NewMongo(db),
-				Logger:         logger,
+				POIManager: &poi.Manager{},
+				Mongo:      tripdao.NewMongo(db),
+				Logger:     logger,
 			})
-			rentalpb.RegisterProfileServiceServer(s,profService)
+			rentalpb.RegisterProfileServiceServer(s, profService)
 		},
 	})
 	logger.Fatal("cannot start trip server", zap.Error(err))
