@@ -58,7 +58,7 @@ func TestCarUpdate(t *testing.T) {
 					TripId: "test_trip",
 					Driver: &carpb.Driver{
 						Id:        "test_driver",
-						AvatorUrl: "test_avatar",
+						AvatarUrl: "test_avatar",
 					},
 				})
 				return err
@@ -88,7 +88,7 @@ func TestCarUpdate(t *testing.T) {
 					TripId: "bad_trip",
 					Driver: &carpb.Driver{
 						Id:        "bad_driver",
-						AvatorUrl: "test_avatar",
+						AvatarUrl: "test_avatar",
 					},
 				})
 				return err
@@ -103,7 +103,7 @@ func TestCarUpdate(t *testing.T) {
 				})
 				return err
 			},
-			want: `{"status":4,"driver":{"id":"test_driver","avatar_url":"test_avatar"},"position":{"latitude":31,"longitude":121},"trip_id":"test_trip"}`,
+			 want: `{"status":4,"driver":{"id":"test_driver","avatar_url":"test_avatar"},"position":{"latitude":31,"longitude":121},"trip_id":"test_trip"}`,
 		},
 		{
 			name: "lock_complete",

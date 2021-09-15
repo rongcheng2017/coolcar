@@ -152,7 +152,7 @@ export const car = $root.car = (() => {
              * @memberof car.v1
              * @interface IDriver
              * @property {string|null} [id] Driver id
-             * @property {string|null} [avatorUrl] Driver avatorUrl
+             * @property {string|null} [avatarUrl] Driver avatarUrl
              */
 
             /**
@@ -179,12 +179,12 @@ export const car = $root.car = (() => {
             Driver.prototype.id = "";
 
             /**
-             * Driver avatorUrl.
-             * @member {string} avatorUrl
+             * Driver avatarUrl.
+             * @member {string} avatarUrl
              * @memberof car.v1.Driver
              * @instance
              */
-            Driver.prototype.avatorUrl = "";
+            Driver.prototype.avatarUrl = "";
 
             /**
              * Creates a Driver message from a plain object. Also converts values to their respective internal types.
@@ -200,8 +200,8 @@ export const car = $root.car = (() => {
                 let message = new $root.car.v1.Driver();
                 if (object.id != null)
                     message.id = String(object.id);
-                if (object.avatorUrl != null)
-                    message.avatorUrl = String(object.avatorUrl);
+                if (object.avatarUrl != null)
+                    message.avatarUrl = String(object.avatarUrl);
                 return message;
             };
 
@@ -220,12 +220,12 @@ export const car = $root.car = (() => {
                 let object = {};
                 if (options.defaults) {
                     object.id = "";
-                    object.avatorUrl = "";
+                    object.avatarUrl = "";
                 }
                 if (message.id != null && message.hasOwnProperty("id"))
                     object.id = message.id;
-                if (message.avatorUrl != null && message.hasOwnProperty("avatorUrl"))
-                    object.avatorUrl = message.avatorUrl;
+                if (message.avatarUrl != null && message.hasOwnProperty("avatarUrl"))
+                    object.avatarUrl = message.avatarUrl;
                 return object;
             };
 

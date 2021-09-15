@@ -102,14 +102,14 @@ func (m *Mongo) UpdateCar(c context.Context, id id.CarID, status carpb.CarStatus
 		mgutil.IDFieldName: objID,
 	}
 	if status != carpb.CarStatus_CS_NOT_SPECIFIED {
-		filter[statusField] = update.Status
+		filter[statusField] = status
 	}
 	u := bson.M{}
 	if update.Status != carpb.CarStatus_CS_NOT_SPECIFIED {
 		u[statusField] = update.Status
 	}
 	if update.Driver != nil {
-		u[driverField] = update.Status
+		u[driverField] = update.Driver
 	}
 	if update.Position != nil {
 		u[positionField] = update.Position

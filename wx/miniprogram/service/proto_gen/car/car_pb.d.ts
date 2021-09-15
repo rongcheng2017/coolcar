@@ -67,8 +67,8 @@ export namespace car {
             /** Driver id */
             id?: (string|null);
 
-            /** Driver avatorUrl */
-            avatorUrl?: (string|null);
+            /** Driver avatarUrl */
+            avatarUrl?: (string|null);
         }
 
         /** Represents a Driver. */
@@ -83,8 +83,8 @@ export namespace car {
             /** Driver id. */
             public id: string;
 
-            /** Driver avatorUrl. */
-            public avatorUrl: string;
+            /** Driver avatarUrl. */
+            public avatarUrl: string;
 
             /**
              * Creates a Driver message from a plain object. Also converts values to their respective internal types.

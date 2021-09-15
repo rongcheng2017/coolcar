@@ -18,7 +18,7 @@ enum CarStatus{
 
 message Driver{
     string id =1;
-    string avator_url=2;
+    string avatar_url=2;
 }
 
 message Location{

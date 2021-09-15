@@ -71,7 +71,7 @@ func (s *Service) UnlockCar(c context.Context, req *carpb.UnlockCarRequest) (*ca
 		Status:       carpb.CarStatus_UNLOCKING,
 		Driver:       req.Driver,
 		UpdateTripID: true,
-		TripID:       id.TripID(req.Id),
+		TripID:       id.TripID(req.TripId),
 	})
 	if err != nil {
 		code := codes.Internal
