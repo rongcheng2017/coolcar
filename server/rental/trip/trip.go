@@ -6,6 +6,7 @@ import (
 	"coolcar/rental/trip/dao"
 	"coolcar/shared/auth"
 	"coolcar/shared/id"
+	"coolcar/shared/mongo/objid"
 	"math/rand"
 	"time"
 
@@ -32,7 +33,8 @@ type ProfileManager interface {
 type CarManager interface {
 	//需要知道车的位置以及人的位置
 	Verify(context.Context, id.CarID, *rentalpb.Location) error
-	Unlock(context.Context, id.CarID) error
+	Unlock(context.Context, id.CarID, id.AccountID, id.TripID, string) error
+	Lock(context.Context, id.CarID) error
 }
 
 //POIManager resolves Ponit of Interest
@@ -84,7 +86,7 @@ func (s *Service) CreateTrip(c context.Context, request *rentalpb.CreateTripRequ
 
 	//车辆开锁
 	go func() {
-		err := s.CarManager.Unlock(context.Background(), carID)
+		err := s.CarManager.Unlock(context.Background(), carID, aid, objid.ToTripID(tr.ID), request.AvatarUrl)
 		if err != nil {
 			s.Logger.Error("cannot unlock car ", zap.Error(err))
 		}
@@ -150,12 +152,17 @@ func (s *Service) UpdateTrip(c context.Context, request *rentalpb.UpdateTripRequ
 	tr.Trip.Current = s.calcCurrentStatus(c, tr.Trip.Current, cur)
 
 	if request.EndTrip {
+		//先关锁 再入口还车
+		err := s.CarManager.Lock(c, id.CarID(tr.Trip.CarId))
+		if err != nil {
+			return nil, status.Errorf(codes.FailedPrecondition, "cannot unlock car: %v", err)
+		}
 		tr.Trip.End = tr.Trip.Current
 		tr.Trip.Status = rentalpb.TripStatus_FINISHED
 	}
 	err = s.Mongo.UpdateTrip(c, tid, aid, tr.UpdateAt, tr.Trip)
 	if err != nil {
-		return nil, status.Error(codes.Aborted,"")
+		return nil, status.Error(codes.Aborted, "")
 	}
 	return tr.Trip, nil
 }

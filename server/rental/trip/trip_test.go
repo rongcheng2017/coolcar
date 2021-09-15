@@ -212,12 +212,16 @@ func (p *profileManager) Verify(c context.Context, aid id.AccountID) (id.Identit
 type carManager struct {
 	verifyError error
 	unlockError error
+	lockError   error
 }
 
 func (cm *carManager) Verify(c context.Context, carID id.CarID, ls *rentalpb.Location) error {
 	return cm.verifyError
 }
 
-func (cm *carManager) Unlock(c context.Context, carID id.CarID) error {
+func (cm *carManager) Unlock(ctx context.Context, carID id.CarID, aid id.AccountID, tid id.TripID, avatarURL string) error {
 	return cm.unlockError
+}
+func (cm *carManager) Lock(ctx context.Context, carID id.CarID) error {
+	return cm.lockError
 }

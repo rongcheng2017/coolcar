@@ -35,7 +35,7 @@ func (s *Service) GetCar(c context.Context, req *carpb.GetCarRequest) (*carpb.Ca
 	}
 	return cr.Car, nil
 }
-func (s *Service) GetCars(c context.Context, req *carpb.GetCarRequest) (*carpb.GetCarsResponse, error) {
+func (s *Service) GetCars(c context.Context, req *carpb.GetCarsRequest) (*carpb.GetCarsResponse, error) {
 	cars, err := s.Mongo.GetCars(c)
 	if err != nil {
 		s.Logger.Error("cannot get cars", zap.Error(err))
@@ -83,12 +83,13 @@ func (s *Service) UnlockCar(c context.Context, req *carpb.UnlockCarRequest) (*ca
 	s.publish(c, car)
 	return &carpb.UnlockCarResponse{}, nil
 }
-
+// Good to be called by car software/firmware.
 func (s *Service) UpdateCar(c context.Context, req *carpb.UpdateCarRequest) (*carpb.UpdateCarResponse, error) {
 	update := &dao.CarUpdate{
 		Status:   req.Status,
 		Position: req.Position,
 	}
+	//clear
 	if req.Status == carpb.CarStatus_LOCKED {
 		update.Driver = &carpb.Driver{}
 		update.UpdateTripID = true
