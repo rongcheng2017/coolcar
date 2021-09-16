@@ -12,9 +12,14 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+type Publisher interface {
+	Publish(context.Context, *carpb.CarEntity) error
+}
+
 type Service struct {
-	Mongo  *dao.Mongo
-	Logger *zap.Logger
+	Mongo     *dao.Mongo
+	Logger    *zap.Logger
+	Publisher Publisher
 	carpb.UnimplementedCarServiceServer
 }
 
@@ -83,6 +88,7 @@ func (s *Service) UnlockCar(c context.Context, req *carpb.UnlockCarRequest) (*ca
 	s.publish(c, car)
 	return &carpb.UnlockCarResponse{}, nil
 }
+
 // Good to be called by car software/firmware.
 func (s *Service) UpdateCar(c context.Context, req *carpb.UpdateCarRequest) (*carpb.UpdateCarResponse, error) {
 	update := &dao.CarUpdate{
@@ -104,5 +110,11 @@ func (s *Service) UpdateCar(c context.Context, req *carpb.UpdateCarRequest) (*ca
 }
 
 func (s *Service) publish(c context.Context, car *dao.CarRecord) {
-	//todo
+	err := s.Publisher.Publish(c, &carpb.CarEntity{
+		Id:  car.ID.Hex(),
+		Car: car.Car,
+	})
+	if err != nil {
+		s.Logger.Warn("cannot publish", zap.Error(err))
+	}
 }

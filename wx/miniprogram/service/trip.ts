@@ -32,4 +32,22 @@ export namespace TripService {
         })
 
     }
+
+    export function finishTrip(id: string) {
+        return updateTrip({ id, endTrip: true })
+
+    }
+
+    function updateTrip(r: rental.v1.IUpdateTripRequest): Promise<rental.v1.ITrip> {
+        if (!r.id) {
+            return Promise.reject("must specify id")
+        }
+        return Coolcar.sendRequesWithAutyRetry({
+            method: 'PUT',
+            path: `/v1/trip/${encodeURIComponent(r.id)}`,
+            data: r,
+            respMarshaller: rental.v1.Trip.fromObject,
+        })
+
+    }
 }

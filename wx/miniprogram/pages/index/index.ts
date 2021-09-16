@@ -73,7 +73,7 @@ Page({
     }
     wx.scanCode({
       success: async() => {
-        const carID = 'car123'
+        const carID = '61416dd3eee514b088b44e8e'
         //作为参数值，需要转义
         const lockURL = routing.lock({ car_id: carID })
         const prof = await ProfileService.getProfile()

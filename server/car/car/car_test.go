@@ -28,6 +28,7 @@ func TestCarUpdate(t *testing.T) {
 	s := &Service{
 		Logger:    logger,
 		Mongo:     dao.NewMongo(mc.Database("coolcar")),
+		Publisher: &testPublisher{},
 	}
 
 	carID := id.CarID("5f8132eb22814bf629489056")
@@ -145,6 +146,10 @@ func TestCarUpdate(t *testing.T) {
 			t.Errorf("%s: incorrect response; want: %s, got: %s", cc.name, cc.want, got)
 		}
 	}
+}
+type testPublisher struct{}
+func (p *testPublisher)Publish(ctx context.Context,car *carpb.CarEntity)error{
+	return nil
 }
 
 func TestMain(m *testing.M) {
