@@ -2,6 +2,7 @@ import { ProfileService } from "../../service/profile"
 import { rental } from "../../service/proto_gen/rental/rental_pb"
 import { TripService } from "../../service/trip"
 import { routing } from "../../utils/routing"
+import { getUserInfo } from "../../utils/wxapi"
 
 // {{page}}.ts
 const licStatusMap = new Map([
@@ -15,17 +16,21 @@ Page({
   },
   async onLoad() {
     const trips = await TripService.GetTrips(rental.v1.TripStatus.FINISHED)
-   
+
   },
-  onShow(){
-    ProfileService.getProfile().then(p=>{
+  onShow() {
+    ProfileService.getProfile().then(p => {
       this.setData({
-        licStatus:licStatusMap.get(p.identityStatus||0)
+        licStatus: licStatusMap.get(p.identityStatus || 0)
       })
     })
   },
   onRegisterTap() {
     wx.navigateTo({ url: routing.register() })
   },
-  
+  onGetUserInfo() {
+    getUserInfo().then(res => {
+      console.log(res)
+    })
+  }
 })

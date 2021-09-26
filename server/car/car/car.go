@@ -5,6 +5,7 @@ import (
 	"coolcar/car/api/gen/v1"
 	"coolcar/car/dao"
 	"coolcar/shared/id"
+	"coolcar/car/mq"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
@@ -12,14 +13,11 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type Publisher interface {
-	Publish(context.Context, *carpb.CarEntity) error
-}
 
 type Service struct {
 	Mongo     *dao.Mongo
 	Logger    *zap.Logger
-	Publisher Publisher
+	Publisher mq.Publisher
 	carpb.UnimplementedCarServiceServer
 }
 

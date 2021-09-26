@@ -17,8 +17,9 @@ import (
 )
 
 const (
-	authorizationHeader = "authorization"
-	bearerPrefix        = "Bearer "
+	ImpersonateAccountHeader = "impersonate-account-id"
+	authorizationHeader      = "authorization"
+	bearerPrefix             = "Bearer "
 )
 
 type tokenVerifier interface {
@@ -52,18 +53,37 @@ func Inteceptor(publicKeyFile string) (grpc.UnaryServerInterceptor, error) {
 }
 
 func (i *interceptor) HandlerReq(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+	aid := impersonationFromContext(ctx)
+	if aid != "" {
+		fmt.Printf("impersonating %q\n", aid)
+		return handler(ContextWithAccountID(ctx, id.AccountID(aid)), req)
+	}
 	tkn, err := tokenFromContext(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, "")
 	}
 
-	aid, err := i.verifier.Verify((tkn))
+	aid, err = i.verifier.Verify((tkn))
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "token not vaild %v", err)
 	}
 
-	return handler(ContextWithAccountID(ctx,id.AccountID(aid)), req)
+	return handler(ContextWithAccountID(ctx, id.AccountID(aid)), req)
 }
+
+func impersonationFromContext(c context.Context) string {
+	m, ok := metadata.FromIncomingContext(c)
+	if !ok {
+		return ""
+	}
+	imp := m[ImpersonateAccountHeader]
+	if len(imp) == 0 {
+		return ""
+	}
+	return imp[0]
+
+}
+
 func tokenFromContext(c context.Context) (string, error) {
 	m, ok := metadata.FromIncomingContext(c)
 	if !ok {
@@ -83,8 +103,6 @@ func tokenFromContext(c context.Context) (string, error) {
 
 type accountIDKey struct{}
 
-
-
 func ContextWithAccountID(c context.Context, aid id.AccountID) context.Context {
 	return context.WithValue(c, accountIDKey{}, aid)
 }
@@ -92,9 +110,9 @@ func ContextWithAccountID(c context.Context, aid id.AccountID) context.Context {
 // Returns unauthenticated error if no account id is available
 func AccountIDFromContext(c context.Context) (id.AccountID, error) {
 	v := c.Value(accountIDKey{})
-	aid,ok := v.(id.AccountID)
-	if !ok{
-		return "",status.Error(codes.Unauthenticated,"")
+	aid, ok := v.(id.AccountID)
+	if !ok {
+		return "", status.Error(codes.Unauthenticated, "")
 	}
-	return aid,nil
+	return aid, nil
 }

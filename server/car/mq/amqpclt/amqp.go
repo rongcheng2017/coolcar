@@ -8,25 +8,29 @@ import (
 
 	"github.com/streadway/amqp"
 	"go.uber.org/zap"
+
 )
+
+
 
 type Publisher struct {
 	ch       *amqp.Channel
 	exchange string
 }
 
-func NewPublisher(conn *amqp.Connection, exchange string) (*Publisher, error) {
+
+func NewPublisher(conn *amqp.Connection, exchangeStr string) (*Publisher, error) {
 	//channel 虚拟的连接
 	ch, err := conn.Channel()
 	if err != nil {
 		return nil, fmt.Errorf("cannot allocate channel: %v", err)
 	}
-	err = declareExchange(ch, exchange)
+	err = declareExchange(ch, exchangeStr)
 	if err != nil {
 		return nil, fmt.Errorf("cannot declare exchange: %v", err)
 	}
 	return &Publisher{
-		exchange: exchange,
+		exchange: exchangeStr,
 		ch:       ch,
 	}, nil
 

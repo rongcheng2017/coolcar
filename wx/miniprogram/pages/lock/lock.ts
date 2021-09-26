@@ -1,4 +1,6 @@
 import { IAppOption } from "../../appoption";
+import { CarService } from "../../service/car";
+import { car } from "../../service/proto_gen/car/car_pb";
 import { TripService } from "../../service/trip";
 import { routing } from "../../utils/routing";
 
@@ -6,6 +8,7 @@ const shareLocationKey = 'share_location'
 
 Page({
     carID: '',
+    carRefresher: 0,
     data: {
         avatarURL: '',
         shareLocation: true,
@@ -31,10 +34,8 @@ Page({
 
     },
     onShareLocation(e: any) {
-        const shareLocation: boolean = e.detail.value
-        wx.setStorageSync(shareLocationKey, shareLocation)
-
-
+        this.data.shareLocation = e.detail.value
+        wx.setStorageSync(shareLocationKey, this.data.shareLocation)
     },
     onUnlockTap() {
         wx.getLocation({
@@ -45,10 +46,7 @@ Page({
                     latitude: loc.latitude,
                     longitude: loc.longitude,
                 }
-                console.log('starting a trip', {
-                    location: location,
-                    avatarURL: this.data.shareLocation ? this.data.avatarURL : '',
-                })
+
                 if (!this.carID) {
                     console.error('no carID specified');
                     return
@@ -56,23 +54,28 @@ Page({
                 const trip = await TripService.CreateTrip({
                     start: location,
                     carId: this.carID,
+                    avatarUrl: this.data.shareLocation ? this.data.avatarURL : '',
                 })
                 if (!trip.id) {
                     console.error('no tripID in response', trip);
                     return
                 }
                 wx.showLoading({ title: '开锁中', mask: true, })
-                setTimeout(() => {
-                    wx.redirectTo({
-                        url: routing.driving({
-                            trip_id: trip.id
-                        }),
-                        complete: () => {
-                            wx.hideLoading()
-                        }
-                    })
-                }, 2000)
 
+                this.carRefresher = setInterval(async () => {
+                    const c = await CarService.getCar(this.carID)
+                    if (c.status === car.v1.CarStatus.UNLOCKED) {
+                        this.clearCarRefresher()
+                        wx.redirectTo({
+                            url: routing.driving({
+                                trip_id: trip.id
+                            }),
+                            complete: () => {
+                                wx.hideLoading()
+                            }
+                        })
+                    }
+                }, 2000)
             },
             fail: () => {
                 wx.showToast({
@@ -83,5 +86,14 @@ Page({
 
         })
 
+    },
+    onUnload() {
+        this.clearCarRefresher()
+    },
+    clearCarRefresher() {
+        if (this.carRefresher) {
+            clearInterval(this.carRefresher)
+            this.carRefresher = 0
+        }
     }
 })

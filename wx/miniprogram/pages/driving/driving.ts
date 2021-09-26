@@ -1,7 +1,8 @@
+import { rental } from "../../service/proto_gen/rental/rental_pb"
 import { TripService } from "../../service/trip"
 import { routing } from "../../utils/routing"
 
-const centPerSec = 0.7
+const upadteIntervalSec = 5
 
 function formatDuration(sec: number) {
   const padString = (n: number) => n < 10 ? '0' + n.toFixed(0) : n.toFixed(0)
@@ -39,7 +40,7 @@ Page({
     this.tripID = o.trip_id
     TripService.GetTrip(o.trip_id).then(console.log)
     this.setupLocationUpdator()
-    this.setupTimer()
+    this.setupTimer(this.tripID)
   },
   onUnload() {
     wx.stopLocationUpdate()
@@ -61,15 +62,32 @@ Page({
       })
     })
   },
-  setupTimer() {
-    let elapsedSec = 0
-    let cents = 0
+  async setupTimer(tripID: string) {
+    const trip = await TripService.GetTrip(tripID)
+    if (trip.status !== rental.v1.TripStatus.IN_PROGRESS) {
+      console.log('trip not in progress');
+      return
+    }
+    let secSinceLastUpdate = 0
+    let lastUpdateDurationSec = trip.current!.timestampSec as number
+    this.setData({
+      elapsed: formatDuration(lastUpdateDurationSec),
+      fee: formatFee(trip.current!.feeCent!)
+    })
     this.timer = setInterval(() => {
-      elapsedSec++
-      cents += centPerSec
+      secSinceLastUpdate++
+      //5s refresh 
+      if (secSinceLastUpdate % upadteIntervalSec == 0) {
+        TripService.GetTrip(tripID).then(trip => {
+          lastUpdateDurationSec = trip.current!.timestampSec!
+          secSinceLastUpdate = 0
+          this.setData({
+            fee: formatDuration(trip.current!.feeCent!)
+          })
+        }).catch(console.error)
+      }
       this.setData({
-        elapsed: formatDuration(elapsedSec),
-        fee: formatFee(cents)
+        elapsed: formatDuration(lastUpdateDurationSec + secSinceLastUpdate),
       })
     }, 1000)
   },

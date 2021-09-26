@@ -3,19 +3,23 @@ package sim
 import (
 	"context"
 	carpb "coolcar/car/api/gen/v1"
+	"coolcar/car/mq"
+	coolenvpb "coolcar/shared/coolenv"
+	"fmt"
 	"time"
 
 	"go.uber.org/zap"
 )
 
-type Subscriber interface {
-	Subscribe(context.Context) (chan *carpb.CarEntity, func(), error)
+type PosSubScriber interface {
+	Subscribe(context.Context) (chan *coolenvpb.CarPosUpdate, func(), error)
 }
-
 type Controller struct {
-	CarService carpb.CarServiceClient
-	Subscriber Subscriber
-	Logger     *zap.Logger
+	CarService    carpb.CarServiceClient
+	AIService     coolenvpb.AIServiceClient
+	CarSubscriber mq.Subscriber
+	PosSubScriber PosSubScriber
+	Logger        *zap.Logger
 }
 
 func (c *Controller) RunSimulations(ctx context.Context) {
@@ -32,51 +36,133 @@ func (c *Controller) RunSimulations(ctx context.Context) {
 	}
 	c.Logger.Info("Running car simulations.", zap.Int("car_count", len(cars)))
 
-	msgCh, cleanUp, err := c.Subscriber.Subscribe(ctx)
-	defer cleanUp()
+	carCh, carcleanUp, err := c.CarSubscriber.Subscribe(ctx)
+	defer carcleanUp()
 	if err != nil {
-		c.Logger.Error("cannot subscribe", zap.Error(err))
+		c.Logger.Error("cannot subscribe car", zap.Error(err))
 		return
+	}
+	posCh, posCleanUp, err := c.PosSubScriber.Subscribe(ctx)
+	defer posCleanUp()
+	if err != nil {
+		c.Logger.Error("cannot subscribe car", zap.Error(err))
 	}
 
 	carChans := make(map[string]chan *carpb.Car)
+	posChans := make(map[string]chan *carpb.Location)
 	for _, car := range cars {
-		ch := make(chan *carpb.Car)
-		carChans[car.Id] = ch
-		go c.SimulateCar(context.Background(), car, ch)
+		carFanoutCh := make(chan *carpb.Car)
+		carChans[car.Id] = carFanoutCh
+
+		posFanoutCh := make(chan *carpb.Location)
+		posChans[car.Id] = posFanoutCh
+		go c.SimulateCar(context.Background(), car, carFanoutCh, posFanoutCh)
 	}
 	//分发
-	for carUpdate := range msgCh {
-		ch := carChans[carUpdate.Id]
-		if ch != nil {
-			ch <- carUpdate.Car
+	for {
+		select {
+		case carUpdate := <-carCh:
+			ch := carChans[carUpdate.Id]
+			if ch != nil {
+				ch <- carUpdate.Car
+			}
+		case posUpdate := <-posCh:
+			ch := posChans[posUpdate.CarId]
+			if ch != nil {
+				ch <- &carpb.Location{
+					Latitude:  posUpdate.Pos.Latitude,
+					Longitude: posUpdate.Pos.Longitude,
+				}
+			}
+
 		}
+
 	}
 }
 
-func (c *Controller) SimulateCar(ctx context.Context, initial *carpb.CarEntity, ch chan *carpb.Car) {
-	carID := initial.Id
-	c.Logger.Info("Simulating car.", zap.String("id", carID))
-	
-	for update := range ch {
-		if update.Status == carpb.CarStatus_UNLOCKING {
-			_, err := c.CarService.UpdateCar(ctx, &carpb.UpdateCarRequest{
-				Id:     carID,
-				Status: carpb.CarStatus_UNLOCKED,
-			})
-			if err != nil {
-				c.Logger.Error("cannot unlock car", zap.Error(err))
-			}
+func (c *Controller) SimulateCar(ctx context.Context, initial *carpb.CarEntity, carCh chan *carpb.Car, posCh chan *carpb.Location) {
+	car := initial
+	c.Logger.Info("Simulating car.", zap.String("id", car.Id))
 
-		} else if update.Status == carpb.CarStatus_LOCKING {
-			_, err := c.CarService.UpdateCar(ctx, &carpb.UpdateCarRequest{
-				Id:     carID,
-				Status: carpb.CarStatus_LOCKED,
-			})
-			if err != nil {
-				c.Logger.Error("cannot lock car", zap.Error(err))
-			}
+	for {
+		select {
+		case update := <-carCh:
+			if update.Status == carpb.CarStatus_UNLOCKING {
+				updated, err := c.unlockCar(ctx, car)
+				if err != nil {
+					c.Logger.Error("cannot unlock car", zap.Error(err))
+					break
+				}
+				car = updated
 
+			} else if update.Status == carpb.CarStatus_LOCKING {
+				updated, err := c.lockCar(ctx, car)
+				if err != nil {
+					c.Logger.Error("cannot lock car", zap.Error(err))
+					break
+				}
+				car = updated
+			}
+		case pos := <-posCh:
+			updated, err := c.moveCar(ctx, car, pos)
+			if err != nil {
+				c.Logger.Error("cannot move car", zap.String("id", car.Id), zap.Error(err))
+				break
+			}
+			car = updated
 		}
+
 	}
+}
+
+func (c *Controller) lockCar(ctx context.Context, car *carpb.CarEntity) (*carpb.CarEntity, error) {
+	car.Car.Status = carpb.CarStatus_LOCKED
+	_, err := c.CarService.UpdateCar(ctx, &carpb.UpdateCarRequest{
+		Id:     car.Id,
+		Status: carpb.CarStatus_LOCKED,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot lock car state: %v", err)
+	}
+	_, err = c.AIService.EndSimulateCarPos(ctx, &coolenvpb.EndSimulateCarPosRequest{
+		CarId: car.Id,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot end simulate car position: %v", err)
+	}
+	return car, nil
+}
+func (c *Controller) unlockCar(ctx context.Context, car *carpb.CarEntity) (*carpb.CarEntity, error) {
+	car.Car.Status = carpb.CarStatus_UNLOCKED
+	_, err := c.CarService.UpdateCar(ctx, &carpb.UpdateCarRequest{
+		Id:     car.Id,
+		Status: carpb.CarStatus_UNLOCKED,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot unlock car : %v", err)
+	}
+	_, err = c.AIService.SimulateCarPos(ctx, &coolenvpb.SimulateCarPosRequest{
+		CarId: car.Id,
+		InitialPos: &coolenvpb.Location{
+			Latitude:  car.Car.Position.Latitude,
+			Longitude: car.Car.Position.Longitude,
+		},
+		Type: coolenvpb.PosType_RANDOM,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot sumulate car position : %v", err)
+	}
+	return car, nil
+}
+
+func (c *Controller) moveCar(ctx context.Context, car *carpb.CarEntity, pos *carpb.Location) (*carpb.CarEntity, error) {
+	car.Car.Position = pos
+	_, err := c.CarService.UpdateCar(ctx, &carpb.UpdateCarRequest{
+		Id:       car.Id,
+		Position: pos,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot update car", zap.Error(err))
+	}
+	return car, nil
 }
