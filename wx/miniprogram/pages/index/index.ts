@@ -15,8 +15,8 @@ interface Marker {
 }
 
 const defaultAvatar = '/resources/car.png'
-const initialLat = 30
-const initialLng = 120
+const initialLat = 29.76090514382441
+const initialLng = 121.86952988416326
 
 Page({
   isPageShowing: false,
@@ -43,7 +43,7 @@ Page({
       latitude: initialLat,
       longitude: initialLng,
     },
-    scale: 10,
+    scale: 16,
     markers: [] as Marker[]
 
   },
@@ -54,7 +54,9 @@ Page({
       avatarURL: userInfo?.avatarUrl
     })
     if (!this.socket) {
-      this.setupCarPosUpdater()
+      this.setData({
+        markers: []
+      },()=>this.setupCarPosUpdater())
     }
   },
   onHide() {
@@ -178,7 +180,7 @@ Page({
           },
           autoRotate: false,
           rotate: 0,
-          duration: 900,
+          duration: 90,
           animationEnd: endTranslation,
         })
       }
