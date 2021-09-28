@@ -18,10 +18,14 @@ import (
 )
 
 var addr = flag.String("addr", ":8080", "address to listen")
+var authAddr = flag.String("auth_addr", ":loalhost:8081", "address to listen")
+var tripAddr = flag.String("trip_addr", "loalhost:8082", "address to listen")
+var profileAddr = flag.String("profile_addr", "loalhost:8082", "address to listen")
+var carAddr = flag.String("car_addr", "loalhost:8084", "address to listen")
 
 func main() {
 	flag.Parse()
-
+	
 	logger, err := server.NewZapLogger()
 	if err != nil {
 		log.Fatalf("cannot create logger :%v", err)
@@ -54,21 +58,21 @@ func main() {
 	}{
 		{
 			name:         "auth",
-			addr:         "loalhost:8081",
+			addr:         *authAddr,
 			registerFunc: authpb.RegisterAuthServiceHandlerFromEndpoint,
 		},
 		{
 			name:         "trip",
-			addr:         "loalhost:8082",
+			addr:         *tripAddr,
 			registerFunc: rentalpb.RegisterTripServiceHandlerFromEndpoint,
 		}, {
 			name:         "profile",
-			addr:         "loalhost:8082",
+			addr:         *profileAddr,
 			registerFunc: rentalpb.RegisterProfileServiceHandlerFromEndpoint,
 		},
 		{
 			name:         "car",
-			addr:         "loalhost:8084",
+			addr:         *carAddr,
 			registerFunc: carpb.RegisterCarServiceHandlerFromEndpoint,
 		},
 	}
