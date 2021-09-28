@@ -7,6 +7,7 @@ import (
 	rentalpb "coolcar/rental/api/gen/v1"
 	"coolcar/shared/auth"
 	"coolcar/shared/server"
+	"github.com/namsral/flag"
 	"log"
 	"net/http"
 	"net/textproto"
@@ -16,7 +17,11 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
+var addr = flag.String("addr", ":8080", "address to listen")
+
 func main() {
+	flag.Parse()
+
 	logger, err := server.NewZapLogger()
 	if err != nil {
 		log.Fatalf("cannot create logger :%v", err)
@@ -49,21 +54,21 @@ func main() {
 	}{
 		{
 			name:         "auth",
-			addr:         "localhost:8081",
+			addr:         "loalhost:8081",
 			registerFunc: authpb.RegisterAuthServiceHandlerFromEndpoint,
 		},
 		{
 			name:         "trip",
-			addr:         "localhost:8082",
+			addr:         "loalhost:8082",
 			registerFunc: rentalpb.RegisterTripServiceHandlerFromEndpoint,
 		}, {
 			name:         "profile",
-			addr:         "localhost:8082",
+			addr:         "loalhost:8082",
 			registerFunc: rentalpb.RegisterProfileServiceHandlerFromEndpoint,
 		},
 		{
 			name:         "car",
-			addr:         "localhost:8084",
+			addr:         "loalhost:8084",
 			registerFunc: carpb.RegisterCarServiceHandlerFromEndpoint,
 		},
 	}
@@ -74,9 +79,8 @@ func main() {
 			logger.Sugar().Fatalf("cannot register %s  service %v", sc.name, err)
 		}
 	}
-	addr := ":8080"
-	logger.Sugar().Infof("grpc gateway started at %s", addr)
+	logger.Sugar().Infof("grpc gateway started at %s", *addr)
 	//listen and serve
-	logger.Sugar().Fatal(http.ListenAndServe(addr, mux))
+	logger.Sugar().Fatal(http.ListenAndServe(*addr, mux))
 
 }

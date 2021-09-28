@@ -15,6 +15,9 @@ import (
 	"google.golang.org/grpc"
 )
 
+const myqcloudCOSKEY = ""
+const myqcloudCOSSEC = ""
+
 func main() {
 	logger, err := server.NewZapLogger()
 	if err != nil {
@@ -26,7 +29,7 @@ func main() {
 		logger.Fatal("cannot connect mongodb", zap.Error(err))
 	}
 	db := mongoClient.Database("coolcar")
-	st, err := cos.NewService("https://coolcar-1307431695.cos.ap-beijing.myqcloud.com", "AKIDvfAQQAeutb5JHyOYS6TbT5RXNwEFzUji", "kDQN4VgbEbiY8SWKr88tNbYFgqoVv4ye")
+	st, err := cos.NewService("https://coolcar-1307431695.cos.ap-beijing.myqcloud.com", myqcloudCOSKEY, myqcloudCOSSEC)
 	if err != nil {
 		logger.Fatal("cannot create cos service", zap.Error(err))
 	}
@@ -42,5 +45,4 @@ func main() {
 			})
 		},
 	}))
-
 }
