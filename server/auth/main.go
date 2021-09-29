@@ -25,7 +25,7 @@ var addr = flag.String("addr", ":8080", "address to listen")
 var mongoURI = flag.String("mongo_uri", "mongodb://localhost:27017", "mongo uri to listen")
 var privateKeyFile = flag.String("private_key_file", "private.key", "private key file to listen")
 var wechatAppID = flag.String("wechat_app_id", "wxcc3d786130252958", "wechat app id")
-var wechatAppSecret = flag.String("wechat_app_id", "ff5309cdd797e3b5e6de46f08a3ab103", "wechat app secret")
+var wechatAppSecret = flag.String("wechat_app_secret", "ff5309cdd797e3b5e6de46f08a3ab103", "wechat app secret")
 
 func main() {
 	flag.Parse()
